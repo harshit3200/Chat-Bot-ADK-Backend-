@@ -1,8 +1,17 @@
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
+
 const express = require('express');
 const cors = require('cors');
 const multer = require("multer");
 require('dotenv').config();
 
+//Database connection
+const mongoose = require("mongoose");
+
+mongoose.connect(process.env.MONGODB_URL)
+  .then(() => console.log("MongoDB connected ✅"))
+  .catch(err => console.log(err));
 
 const app = express();
 
