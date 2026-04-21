@@ -6,6 +6,7 @@ const cors = require('cors');
 const multer = require("multer");
 require('dotenv').config();
 const Form = require('./models/Form');
+const nodemailer = require('nodemailer');
 
 //Database connection
 const mongoose = require("mongoose");
@@ -15,6 +16,13 @@ mongoose.connect(process.env.MONGODB_URL)
   .catch(err => console.log(err));
 
 const app = express();
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
 
 app.use(cors());
 app.use(express.json());
@@ -51,7 +59,14 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
 
         await newForm.save();
 
-        res.status(200).json({ message: "Form submitted successfully!" });
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: process.env.EMAIL_USER,
+            subject: "New Form Submission",
+            text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
+        });
+
+        res.status(200).json({ message: "Form submitted and email sent successfully" });
     } catch (error) {
         console.error("Error submitting form:", error);
         res.status(500).json({ message: "Error submitting form" });
