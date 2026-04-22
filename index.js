@@ -7,7 +7,8 @@ const multer = require("multer");
 require('dotenv').config();
 const Form = require('./models/Form');
 const nodemailer = require('nodemailer');
-const {S3Client} = require('@aws-sdk/client-s3');
+const { S3Client } = require('@aws-sdk/client-s3');
+const multerS3 = require("multer-s3");
 
 //Database connection
 const mongoose = require("mongoose");
@@ -40,18 +41,25 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: storage });
-
-const { S3Client } = require("@aws-sdk/client-s3");
 
 const s3 = new S3Client({
-  region: "us-east-1",
-  endpoint: "http://localhost:9000",
-  credentials: {
-    accessKeyId: "admin",
-    secretAccessKey: "admin123",
-  },
-  forcePathStyle: true,
+    region: "us-east-1",
+    endpoint: "http://localhost:9000",
+    credentials: {
+        accessKeyId: "admin",
+        secretAccessKey: "admin123",
+    },
+    forcePathStyle: true,
+});
+
+const upload = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: "uploads",
+    key: function (req, file, cb) {
+      cb(null, Date.now().toString() + "-" + file.originalname);
+    },
+  }),
 });
 
 app.get('/', (req, res) => {
@@ -62,6 +70,10 @@ app.get('/', (req, res) => {
 app.post('/api/submit', upload.single("file"), async (req, res) => {
     try{
         const {name, email, message} = req.body;
+
+        if (!name || !email || !message) {
+  return res.status(400).json({ error: "All fields required" });
+}
         
         const newForm = new Form({
             name,
@@ -79,10 +91,20 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
             text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
         });
 
-        res.status(200).json({ message: "Form submitted and email sent successfully" });
+        res.json({
+  success: true,
+  message: "Form submitted successfully",
+  data: {
+    name,
+    email,
+    file: req.file?.location || req.file?.key
+  }
+});
     } catch (error) {
         console.error("Error submitting form:", error);
-        res.status(500).json({ message: "Error submitting form" });
+        res.status(500).json({
+            success:false,
+            message: "Internal server error" });
     }
 })
 
