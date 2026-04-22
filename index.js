@@ -1,10 +1,10 @@
+require('dotenv').config();
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
 
 const express = require('express');
 const cors = require('cors');
 const multer = require("multer");
-require('dotenv').config();
 const Form = require('./models/Form');
 const nodemailer = require('nodemailer');
 const { S3Client } = require('@aws-sdk/client-s3');
@@ -12,8 +12,10 @@ const multerS3 = require("multer-s3");
 
 //Database connection
 const mongoose = require("mongoose");
+console.log(process.env.MONGO_URI);
 
-mongoose.connect(process.env.MONGODB_URL)
+
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.log(err));
 
@@ -44,7 +46,7 @@ const storage = multer.diskStorage({
 
 const s3 = new S3Client({
     region: "us-east-1",
-    endpoint: "http://localhost:9000",
+    endpoint: process.env.MINIO_ENDPOINT,
     credentials: {
         accessKeyId: "admin",
         secretAccessKey: "admin123",
