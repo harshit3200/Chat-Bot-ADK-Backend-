@@ -7,6 +7,7 @@ const multer = require("multer");
 require('dotenv').config();
 const Form = require('./models/Form');
 const nodemailer = require('nodemailer');
+const {S3Client} = require('@aws-sdk/client-s3');
 
 //Database connection
 const mongoose = require("mongoose");
@@ -40,6 +41,18 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
+
+const { S3Client } = require("@aws-sdk/client-s3");
+
+const s3 = new S3Client({
+  region: "us-east-1",
+  endpoint: "http://localhost:9000",
+  credentials: {
+    accessKeyId: "admin",
+    secretAccessKey: "admin123",
+  },
+  forcePathStyle: true,
+});
 
 app.get('/', (req, res) => {
     res.send('Hello from the backend!');
