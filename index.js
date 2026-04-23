@@ -21,11 +21,11 @@ mongoose.connect(process.env.MONGO_URI)
 
 const app = express();
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
 app.use(cors());
@@ -45,13 +45,13 @@ const storage = multer.diskStorage({
 
 
 const s3 = new S3Client({
-    region: "us-east-1",
-    endpoint: process.env.MINIO_ENDPOINT,
-    credentials: {
-        accessKeyId: "admin",
-        secretAccessKey: "admin123",
-    },
-    forcePathStyle: true,
+  region: "us-east-1",
+  endpoint: process.env.MINIO_ENDPOINT,
+  credentials: {
+    accessKeyId: "admin",
+    secretAccessKey: "admin123",
+  },
+  forcePathStyle: true,
 });
 
 const upload = multer({
@@ -65,52 +65,53 @@ const upload = multer({
 });
 
 app.get('/', (req, res) => {
-    res.send('Hello from the backend!');
+  res.send('Hello from the backend!');
 })
 
 // upload file route
 app.post('/api/submit', upload.single("file"), async (req, res) => {
-    try{
-        const {name, email, message} = req.body;
+  try {
+    const { name, email, message } = req.body;
 
-        if (!name || !email || !message) {
-  return res.status(400).json({ error: "All fields required" });
-}
-        
-        const newForm = new Form({
-            name,
-            email,
-            message,
-            filePath: req.file ? req.file.path : null,
-        });
-
-        await newForm.save();
-
-        await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: process.env.EMAIL_USER,
-            subject: "New Form Submission",
-            text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
-        });
-
-        res.json({
-  success: true,
-  message: "Form submitted successfully",
-  data: {
-    name,
-    email,
-    file: req.file?.location || req.file?.key
-  }
-});
-    } catch (error) {
-        console.error("Error submitting form:", error);
-        res.status(500).json({
-            success:false,
-            message: "Internal server error" });
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: "All fields required" });
     }
+
+    const newForm = new Form({
+      name,
+      email,
+      message,
+      filePath: req.file ? req.file.path : null,
+    });
+
+    await newForm.save();
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER,
+      subject: "New Form Submission",
+      text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
+    });
+
+    res.json({
+      success: true,
+      message: "Form submitted successfully",
+      data: {
+        name,
+        email,
+        file: req.file?.location || req.file?.key
+      }
+    });
+  } catch (error) {
+    console.error("Error submitting form:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
+  }
 })
 
 // Start the server
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+  console.log(`Server is running on port ${port}`);
 });
