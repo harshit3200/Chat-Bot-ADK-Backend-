@@ -14,14 +14,16 @@ const multerS3 = require("multer-s3");
 const mongoose = require("mongoose");
 console.log(process.env.MONGO_URI);
 
-
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.log(err));
 
 const app = express();
+
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.SMTP_HOST,
+  port: 465,
+  secure: true, // 🔥 MUST for 465
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
