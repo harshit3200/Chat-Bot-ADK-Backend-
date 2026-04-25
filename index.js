@@ -88,14 +88,46 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
 
     await newForm.save();
 
+
+    const Minio = require("minio");
+
+    const minioClient = new Minio.Client({
+      endPoint: "127.0.0.1",
+      port: 9000,
+      useSSL: false,
+      accessKey: process.env.MINIO_ACCESS_KEY,
+      secretKey: process.env.MINIO_SECRET_KEY,
+    });
+
+    let attachments = [];
+
+    if (req.file) {
+      const stream = await minioClient.getObject("uploads", req.file.key);
+
+      let chunks = [];
+
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+
+      const fileBuffer = Buffer.concat(chunks);
+
+      attachments.push({
+        filename: req.file.originalname,
+        content: fileBuffer,
+      });
+    }
+
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_USER,
       subject: "New Form Submission",
       text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
+      attachments
+      // attachment add 
     });
 
-    
+
     res.json({
       success: true,
       message: "Form submitted successfully",
