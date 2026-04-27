@@ -8,6 +8,7 @@ const Form = require('./models/Form');
 const nodemailer = require('nodemailer');
 const { S3Client } = require('@aws-sdk/client-s3');
 const multerS3 = require("multer-s3");
+const Minio = require("minio");
 //Database connection
 const mongoose = require("mongoose");
 mongoose.connect(process.env.MONGO_URI)
@@ -53,24 +54,7 @@ const upload = multer({
     },
   }),
 });
-app.get('/', (req, res) => {
-  res.send('Hello from the backend!');
-})
-// upload file route
-app.post('/api/submit', upload.single("file"), async (req, res) => {
-  try {
-    const { name, email, message } = req.body;
-    if (!name || !email || !message) {
-      return res.status(400).json({ error: "All fields required" });
-    }
-    const newForm = new Form({
-      name,
-      email,
-      message,
-      filePath: req.file ? req.file.path : null,
-    });
-    await newForm.save();
-    const Minio = require("minio");
+
     const minioClient = new Minio.Client({
       endPoint: process.env.MINIO_ENDPOINT,
       port: Number(process.env.MINIO_PORT) || 9000,
@@ -78,7 +62,7 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
       accessKey: process.env.MINIO_ACCESS_KEY,
       secretKey: process.env.MINIO_SECRET_KEY,
     });
-    const bucketName = "uploads";
+const bucketName = "uploads";
     const ensureBucketExists = async () => {
       return new Promise((resolve, reject) => {
         minioClient.bucketExists(bucketName, (err, exists) => {
@@ -97,6 +81,25 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
         });
       });
     };
+
+
+app.get('/', (req, res) => {
+  res.send('Hello from the backend!');
+})
+// upload file route
+app.post('/api/submit', upload.single("file"), async (req, res) => {
+  try {
+    const { name, email, message } = req.body;
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: "All fields required" });
+    }
+    const newForm = new Form({
+      name,
+      email,
+      message,
+      filePath: req.file ? req.file.path : null,
+    });
+    await newForm.save();
     let attachments = [];
     if (req.file) {
       const stream = await minioClient.getObject("uploads", req.file.key);
