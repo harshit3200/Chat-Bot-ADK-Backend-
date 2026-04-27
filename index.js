@@ -79,7 +79,7 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
       secretKey: process.env.MINIO_SECRET_KEY,
     });
     const bucketName = "uploads";
-    minioClient.bucketExists(bucketName, function (err, exists) {
+    const ensureBucketExists = minioClient.bucketExists(bucketName, function (err, exists) {
       if (err) return console.log("Error checking bucket:", err);
 
       if (!exists) {
