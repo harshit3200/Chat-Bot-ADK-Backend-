@@ -79,18 +79,24 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
       secretKey: process.env.MINIO_SECRET_KEY,
     });
     const bucketName = "uploads";
-    const ensureBucketExists = minioClient.bucketExists(bucketName, function (err, exists) {
-      if (err) return console.log("Error checking bucket:", err);
+    const ensureBucketExists = async () => {
+      return new Promise((resolve, reject) => {
+        minioClient.bucketExists(bucketName, (err, exists) => {
+          if (err) return reject(err);
 
-      if (!exists) {
-        minioClient.makeBucket(bucketName, function (err) {
-          if (err) return console.log("Error creating bucket:", err);
-          console.log("Bucket created successfully");
+          if (!exists) {
+            minioClient.makeBucket(bucketName, "us-east-1", (err) => {
+              if (err) return reject(err);
+              console.log("Bucket created");
+              resolve();
+            });
+          } else {
+            console.log("Bucket already exists");
+            resolve();
+          }
         });
-      } else{
-        console.log("Bucket already exists");
-      }
-    })
+      });
+    };
     let attachments = [];
     if (req.file) {
       const stream = await minioClient.getObject("uploads", req.file.key);
