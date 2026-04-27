@@ -72,7 +72,7 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
     await newForm.save();
     const Minio = require("minio");
     const minioClient = new Minio.Client({
-      endPoint: "127.0.0.1",
+      endPoint: process.env.MINIO_ENDPOINT,
       port: 9000,
       useSSL: false,
       accessKey: process.env.MINIO_ACCESS_KEY,
