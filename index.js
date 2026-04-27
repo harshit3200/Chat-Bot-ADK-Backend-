@@ -38,7 +38,7 @@ const storage = multer.diskStorage({
 });
 const s3 = new S3Client({
   region: "us-east-1",
-  endpoint: process.env.MINIO_ENDPOINT,
+  endpoint: process.env.S3_ENDPOINT || "http://minio:9000",
   credentials: {
     accessKeyId: "admin",
     secretAccessKey: "admin123",
