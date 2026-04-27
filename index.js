@@ -131,7 +131,7 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
 })
 
 // Start the server
-app.listen(port, () => {
+app.listen(port, async () => {
   await ensureBucketExists();
   console.log(`Server is running on port ${port}`);
 });
