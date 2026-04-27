@@ -78,6 +78,19 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
       accessKey: process.env.MINIO_ACCESS_KEY,
       secretKey: process.env.MINIO_SECRET_KEY,
     });
+    const bucketName = "uploads";
+    minioClient.bucketExists(bucketName, function (err, exists) {
+      if (err) return console.log("Error checking bucket:", err);
+
+      if (!exists) {
+        minioClient.makeBucket(bucketName, function (err) {
+          if (err) return console.log("Error creating bucket:", err);
+          console.log("Bucket created successfully");
+        });
+      } else{
+        console.log("Bucket already exists");
+      }
+    })
     let attachments = [];
     if (req.file) {
       const stream = await minioClient.getObject("uploads", req.file.key);
@@ -119,5 +132,6 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
 
 // Start the server
 app.listen(port, () => {
+  await ensureBucketExists();
   console.log(`Server is running on port ${port}`);
 });
