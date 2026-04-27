@@ -1,7 +1,6 @@
 require('dotenv').config();
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
-
 const express = require('express');
 const cors = require('cors');
 const multer = require("multer");
@@ -9,16 +8,12 @@ const Form = require('./models/Form');
 const nodemailer = require('nodemailer');
 const { S3Client } = require('@aws-sdk/client-s3');
 const multerS3 = require("multer-s3");
-
 //Database connection
 const mongoose = require("mongoose");
-
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.log(err));
-
 const app = express();
-
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: 465,
@@ -28,12 +23,9 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
 });
-
 app.use(cors());
 app.use(express.json());
-
 const port = process.env.PORT || 5000;
-
 // storage config
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -43,8 +35,6 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + "-" + file.originalname);
   },
 });
-
-
 const s3 = new S3Client({
   region: "us-east-1",
   endpoint: process.env.MINIO_ENDPOINT,
@@ -54,7 +44,6 @@ const s3 = new S3Client({
   },
   forcePathStyle: true,
 });
-
 const upload = multer({
   storage: multerS3({
     s3: s3,
@@ -64,32 +53,24 @@ const upload = multer({
     },
   }),
 });
-
 app.get('/', (req, res) => {
   res.send('Hello from the backend!');
 })
-
 // upload file route
 app.post('/api/submit', upload.single("file"), async (req, res) => {
   try {
     const { name, email, message } = req.body;
-
     if (!name || !email || !message) {
       return res.status(400).json({ error: "All fields required" });
     }
-
     const newForm = new Form({
       name,
       email,
       message,
       filePath: req.file ? req.file.path : null,
     });
-
     await newForm.save();
-
-
     const Minio = require("minio");
-
     const minioClient = new Minio.Client({
       endPoint: "127.0.0.1",
       port: 9000,
@@ -97,26 +78,19 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
       accessKey: process.env.MINIO_ACCESS_KEY,
       secretKey: process.env.MINIO_SECRET_KEY,
     });
-
     let attachments = [];
-
     if (req.file) {
       const stream = await minioClient.getObject("uploads", req.file.key);
-
       let chunks = [];
-
       for await (const chunk of stream) {
         chunks.push(chunk);
       }
-
       const fileBuffer = Buffer.concat(chunks);
-
       attachments.push({
         filename: req.file.originalname,
         content: fileBuffer,
       });
     }
-
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_USER,
@@ -125,8 +99,6 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
       attachments
       // attachment add 
     });
-
-
     res.json({
       success: true,
       message: "Form submitted successfully",
