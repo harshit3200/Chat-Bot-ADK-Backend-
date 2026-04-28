@@ -26,6 +26,7 @@ const transporter = nodemailer.createTransport({
 });
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 const port = process.env.PORT || 5000;
 // storage config
 const storage = multer.diskStorage({
@@ -143,4 +144,6 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
 app.listen(port, async () => {
   await ensureBucketExists();
   console.log(`Server is running on port ${port}`);
+console.log("MINIO ENDPOINT:", process.env.MINIO_ENDPOINT);
+  
 });
