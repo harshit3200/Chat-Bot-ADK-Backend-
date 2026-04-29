@@ -144,6 +144,4 @@ app.post('/api/submit', upload.single("file"), async (req, res) => {
 app.listen(port, async () => {
   await ensureBucketExists();
   console.log(`Server is running on port ${port}`);
-console.log("MINIO ENDPOINT:", process.env.MINIO_ENDPOINT);
-  
 });
