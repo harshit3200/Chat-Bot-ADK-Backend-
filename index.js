@@ -91,8 +91,8 @@ app.get('/', (req, res) => {
 app.post('/api/submit', upload.single("file"), async (req, res) => {
   try {
     const { name, email, message } = req.body;
-    if (!name || !email || !message) {
-      return res.status(400).json({ error: "All fields required" });
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
     }
     const newForm = new Form({
       name,
